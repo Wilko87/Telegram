@@ -363,24 +363,24 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
     }
 
     @Override
-    int needsActionBar() {
+    public int needsActionBar() {
         return 1;
     }
 
     @Override
-    void onResume() {
+    public void onResume() {
         if (listAdapter != null) {
             listAdapter.notifyDataSetChanged();
         }
     }
 
     @Override
-    void onHideShowProgress(float progress) {
+    public void onHideShowProgress(float progress) {
         parentAlert.doneItem.setAlpha((parentAlert.doneItem.isEnabled() ? 1.0f : 0.5f) * progress);
     }
 
     @Override
-    void onMenuItemClick(int id) {
+    public void onMenuItemClick(int id) {
         if (id == done_button) {
             if (quizPoll && parentAlert.doneItem.getAlpha() != 1.0f) {
                 int checksCount = 0;
@@ -433,18 +433,18 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
             if (chatActivity.isInScheduleMode()) {
                 AlertsCreator.createScheduleDatePickerDialog(chatActivity.getParentActivity(), chatActivity.getDialogId(), (notify, scheduleDate) -> {
                     delegate.sendPoll(poll, params, notify, scheduleDate);
-                    parentAlert.dismiss();
+                    parentAlert.dismiss(true);
                 });
             } else {
                 delegate.sendPoll(poll, params, true, 0);
-                parentAlert.dismiss();
+                parentAlert.dismiss(true);
             }
         }
     }
 
     @Override
-    int getCurrentItemTop() {
-        if (listView.getChildCount() <= 0) {
+    public int getCurrentItemTop() {
+        if (listView.getChildCount() <= 1) {
             return Integer.MAX_VALUE;
         }
         View child = listView.getChildAt(1);
@@ -454,14 +454,14 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
         RecyclerListView.Holder holder = (RecyclerListView.Holder) listView.findContainingViewHolder(child);
         int top = (int) child.getY() - AndroidUtilities.dp(8);
         int newOffset = top > 0 && holder != null && holder.getAdapterPosition() == 1 ? top : 0;
-        if (top >= 0 && holder != null && holder.getAdapterPosition() == 0) {
+        if (top >= 0 && holder != null && holder.getAdapterPosition() == 1) {
             newOffset = top;
         }
         return newOffset + AndroidUtilities.dp(25);
     }
 
     @Override
-    int getFirstOffset() {
+    public int getFirstOffset() {
         return getListTopPadding() + AndroidUtilities.dp(17);
     }
 
@@ -472,12 +472,12 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
     }
 
     @Override
-    int getListTopPadding() {
+    public int getListTopPadding() {
         return topPadding;
     }
 
     @Override
-    void onPreMeasure(int availableWidth, int availableHeight) {
+    public void onPreMeasure(int availableWidth, int availableHeight) {
         int padding;
         if (parentAlert.sizeNotifierFrameLayout.measureKeyboardHeight() > AndroidUtilities.dp(20)) {
             padding = AndroidUtilities.dp(52);
@@ -504,7 +504,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
     }
 
     @Override
-    int getButtonsHideOffset() {
+    public int getButtonsHideOffset() {
         return AndroidUtilities.dp(70);
     }
 
@@ -517,7 +517,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
     }
 
     @Override
-    void scrollToTop() {
+    public void scrollToTop() {
         listView.smoothScrollToPosition(1);
     }
 
@@ -638,7 +638,10 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
     }
 
     @Override
-    void onShow() {
+    public void onShow(ChatAttachAlert.AttachAlertLayout previousLayout) {
+        try {
+            parentAlert.actionBar.getTitleTextView().setBuildFullLayout(true);
+        } catch (Exception ignore) {}
         if (quizOnly == 1) {
             parentAlert.actionBar.setTitle(LocaleController.getString("NewQuiz", R.string.NewQuiz));
         } else {
@@ -649,12 +652,12 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
     }
 
     @Override
-    void onHidden() {
+    public void onHidden() {
         parentAlert.doneItem.setVisibility(INVISIBLE);
     }
 
     @Override
-    boolean onBackPressed() {
+    public boolean onBackPressed() {
         if (!checkDiscard()) {
             return true;
         }
@@ -709,7 +712,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
         if (left <= max - max * 0.7f) {
             textCell.setText2(String.format("%d", left));
             SimpleTextView textView = textCell.getTextView2();
-            String key = left < 0 ? Theme.key_windowBackgroundWhiteRedText5 : Theme.key_windowBackgroundWhiteGrayText3;
+            int key = left < 0 ? Theme.key_text_RedRegular : Theme.key_windowBackgroundWhiteGrayText3;
             textView.setTextColor(getThemedColor(key));
             textView.setTag(key);
         } else {
@@ -768,7 +771,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                 }
                 case 2: {
                     TextInfoPrivacyCell cell = (TextInfoPrivacyCell) holder.itemView;
-                    Drawable drawable = Theme.getThemedDrawable(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow);
+                    Drawable drawable = Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow);
                     CombinedDrawable combinedDrawable = new CombinedDrawable(new ColorDrawable(getThemedColor(Theme.key_windowBackgroundGray)), drawable);
                     combinedDrawable.setFullsize(true);
                     cell.setBackgroundDrawable(combinedDrawable);
@@ -789,7 +792,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                 }
                 case 3: {
                     TextCell textCell = (TextCell) holder.itemView;
-                    textCell.setColors(null, Theme.key_windowBackgroundWhiteBlueText4);
+                    textCell.setColors(-1, Theme.key_windowBackgroundWhiteBlueText4);
                     Drawable drawable1 = mContext.getResources().getDrawable(R.drawable.poll_add_circle);
                     Drawable drawable2 = mContext.getResources().getDrawable(R.drawable.poll_add_plus);
                     drawable1.setColorFilter(new PorterDuffColorFilter(getThemedColor(Theme.key_switchTrackChecked), PorterDuff.Mode.MULTIPLY));
@@ -810,6 +813,10 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                         checkCell.setTextAndCheck(LocaleController.getString("PollQuiz", R.string.PollQuiz), quizPoll, false);
                         checkCell.setEnabled(quizOnly == 0, null);
                     }
+                }
+                case 9: {
+                    View view = (View) holder.itemView;
+                    view.requestLayout();
                 }
             }
         }
@@ -873,7 +880,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                     break;
                 case 1:
                     view = new ShadowSectionCell(mContext);
-                    Drawable drawable = Theme.getThemedDrawable(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow);
+                    Drawable drawable = Theme.getThemedDrawableByKey(mContext, R.drawable.greydivider, Theme.key_windowBackgroundGrayShadow);
                     CombinedDrawable combinedDrawable = new CombinedDrawable(new ColorDrawable(getThemedColor(Theme.key_windowBackgroundGray)), drawable);
                     combinedDrawable.setFullsize(true);
                     view.setBackgroundDrawable(combinedDrawable);
@@ -936,7 +943,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
                                 if (menu.findItem(android.R.id.copy) == null) {
                                     return;
                                 }
-                                ((ChatActivity) parentAlert.baseFragment).fillActionModeMenu(menu);
+                                ChatActivity.fillActionModeMenu(menu, ((ChatActivity) parentAlert.baseFragment).getCurrentEncryptedChat(), true);
                             }
                         }
                     };
@@ -1208,7 +1215,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{TextInfoPrivacyCell.class}, new String[]{"textView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayText4));
 
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{HeaderCell.class}, new String[]{"textView"}, null, null, null, Theme.key_windowBackgroundWhiteBlueHeader));
-        themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CHECKTAG, new Class[]{HeaderCell.class}, new String[]{"textView2"}, null, null, null, Theme.key_windowBackgroundWhiteRedText5));
+        themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CHECKTAG, new Class[]{HeaderCell.class}, new String[]{"textView2"}, null, null, null, Theme.key_text_RedRegular));
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CHECKTAG, new Class[]{HeaderCell.class}, new String[]{"textView2"}, null, null, null, Theme.key_windowBackgroundWhiteGrayText3));
 
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_TEXTCOLOR, new Class[]{PollEditTextCell.class}, new String[]{"textView"}, null, null, null, Theme.key_windowBackgroundWhiteBlackText));
@@ -1216,7 +1223,7 @@ public class ChatAttachAlertPollLayout extends ChatAttachAlert.AttachAlertLayout
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_HINTTEXTCOLOR, new Class[]{PollEditTextCell.class}, new String[]{"deleteImageView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayIcon));
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_HINTTEXTCOLOR, new Class[]{PollEditTextCell.class}, new String[]{"moveImageView"}, null, null, null, Theme.key_windowBackgroundWhiteGrayIcon));
         themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_USEBACKGROUNDDRAWABLE | ThemeDescription.FLAG_DRAWABLESELECTEDSTATE, new Class[]{PollEditTextCell.class}, new String[]{"deleteImageView"}, null, null, null, Theme.key_stickers_menuSelector));
-        themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CHECKTAG, new Class[]{PollEditTextCell.class}, new String[]{"textView2"}, null, null, null, Theme.key_windowBackgroundWhiteRedText5));
+        themeDescriptions.add(new ThemeDescription(listView, ThemeDescription.FLAG_CHECKTAG, new Class[]{PollEditTextCell.class}, new String[]{"textView2"}, null, null, null, Theme.key_text_RedRegular));
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{PollEditTextCell.class}, new String[]{"checkBox"}, null, null, null, Theme.key_windowBackgroundWhiteGrayIcon));
         themeDescriptions.add(new ThemeDescription(listView, 0, new Class[]{PollEditTextCell.class}, new String[]{"checkBox"}, null, null, null, Theme.key_checkboxCheck));
 
